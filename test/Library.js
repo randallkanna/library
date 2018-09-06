@@ -1,8 +1,3 @@
-
-// contract("SimpleStorage", accounts => {
-//   it("...should store the value 89.", async () => {
-//     const simpleStorageInstance = await SimpleStorage.deployed();9
-
 const Library = artifacts.require("./Library.sol");
 
 contract("Library", accounts => {
@@ -10,9 +5,11 @@ contract("Library", accounts => {
   const librarian = accounts[1];
   const borrower = accounts[2];
 
-  it("should allow creation of a librarian by an owner", async() => {
-    const library = await Library.deployed();
+  beforeEach(async() => {
+    let library = await Library.deployed();
+  })
 
+  it("should allow creation of a librarian by an owner", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway');
 
     let newLibrarian = await library.getLibrarianByAddr(accounts[1]);

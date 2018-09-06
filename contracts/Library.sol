@@ -2,10 +2,10 @@ pragma solidity ^0.4.24;
 
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 
-contract Library is Ownable {
-  constructor() {
+contract Library { //  is Ownable
+  /* constructor() {
     owner = msg.sender;
-  }
+  } */
 
   struct Book {
     uint id;
@@ -35,7 +35,7 @@ contract Library is Ownable {
     return true
   } */
 
-  function createLibrarian(address addr, string name) private onlyOwner {
+  function createLibrarian(address addr, string name) private { // onlyOwner
     librarians[addr] = Librarian(addr, name);
   }
 
