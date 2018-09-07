@@ -12,6 +12,7 @@ contract Library is Ownable {
     string title;
     string category;
     string status;
+    address bookLoanedTo;
     address owner;
   }
 
@@ -24,9 +25,21 @@ contract Library is Ownable {
   mapping(uint => Book) public books;
   mapping(address => bool) public isTrustedLibrarian;
 
+  event loanBookEvent(
+    uint id,
+    address loanedTo
+  );
+
   event addBookEvent(
-    /* address librarian _sender, */
-    /* string _name, */
+    uint id,
+    string title,
+    string category,
+    string status
+  );
+
+  event librarianAddedEvent(
+    string name,
+    address librarian
   );
 
   modifier onlyLibrarian {
@@ -37,6 +50,7 @@ contract Library is Ownable {
   function createLibrarian(address addr, string name) onlyOwner {
     librarians[addr] = Librarian({librarian: addr, name: name});
     isTrustedLibrarian[addr] = true;
+    librarianAddedEvent(name, addr);
   }
 
   function getLibrarianNameByAddr(address addr) public view returns (string) {
@@ -48,9 +62,9 @@ contract Library is Ownable {
     delete librarians[addr];
   }
 
-  function addBook(uint sku, string _title, string _category, string _status, address bookOwner) onlyLibrarian {
-    books[sku] = Book({id: sku, title: _title, category: _category, status: _status, owner: bookOwner});
-    /* addBookEvent(msg.sender, _name, _price); */
+  function addBook(uint sku, string _title, string _category, string _status, address borrower, address bookOwner) onlyLibrarian {
+    books[sku] = Book({id: sku, title: _title, category: _category, status: _status, bookLoanedTo: borrower, owner: bookOwner});
+    addBookEvent(sku, _title, _category, _status);
   }
 
   function removeBook(uint id) {
@@ -69,8 +83,19 @@ contract Library is Ownable {
     return books[id].title;
   }
 
-  function loanBook(address _borrower) {
-    books[id].borrower = _borrower;
+  function loanBook(uint id, address _borrower) onlyLibrarian {
+    books[id].bookLoanedTo = _borrower;
+    loanBookEvent(id, _borrower);
+  }
+
+  function returnBook(uint id, address _librarian) {
+    var bookLoanedTo = books[id].bookLoanedTo;
+    require(bookLoanedTo == msg.sender);
+    books[id].bookLoanedTo = _librarian;
+  }
+
+  function checkBorrower(uint id) public view returns (address) {
+    return books[id].bookLoanedTo;
   }
 
   function transferBookOwnership(uint id, address newOwner) onlyOwner {

@@ -41,7 +41,8 @@ contract("Library", accounts => {
   it("should allow a librarian to add a book", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', owner, {from: librarian});
+    // setting the librarian as the default borrower. implying the owner would loan the librarian the book to create library
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: librarian});
 
     let book = await library.checkBookTitle(115);
 
@@ -51,13 +52,13 @@ contract("Library", accounts => {
   it("should not allow a non librarian to add a book", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await assertRevert(library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', owner, {from: borrower}))
+    await assertRevert(library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: borrower}))
   });
 
   it("should not allow a user who is not a librarian to remove a book", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', owner, {from: librarian});
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: librarian});
 
     await library.removeBook(1155, {from: borrower});
 
@@ -66,22 +67,10 @@ contract("Library", accounts => {
     assert.equal(book, 'Star Trek: Voyager Part 1', 'book is still stored successfully');
   });
 
-  // it("should allow a librarian to remove a book", async() => {
-  //   await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
-  //   await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', owner, {from: librarian});
-  //   await library.removeBook(1155, {from: librarian});
-  //
-  //   let book = await library.checkBookTitle(115);
-  //
-  //   console.log(book)
-  //
-  //   assert.equal(book, '', 'book is removed successfully');
-  // });
-
   it("should show book current status", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'new', owner, {from: librarian});
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'new', librarian, owner, {from: librarian});
 
     let bookStatus = await library.checkBookStatus(115);
 
@@ -91,7 +80,7 @@ contract("Library", accounts => {
   it("should allow new damage to be added to a book", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'new', owner, {from: librarian});
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'new', librarian, owner, {from: librarian});
 
     await library.updateBookDamage(115, 'Damaged', {from: librarian});
 
@@ -103,7 +92,7 @@ contract("Library", accounts => {
   it("should not allow a non-librarian to add damage to a book", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'new', owner, {from: librarian});
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'new', librarian, owner, {from: librarian});
 
     await assertRevert(library.updateBookDamage(115, 'Damaged', {from: borrower}));
   });
@@ -111,7 +100,7 @@ contract("Library", accounts => {
   it("should allow an owner to trade a book to someone else", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', owner, {from: librarian});
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: librarian});
 
     await library.transferBookOwnership(115, borrower, {from: owner});
 
@@ -120,23 +109,18 @@ contract("Library", accounts => {
     assert.equal(newOwner, borrower, 'owner is changed correctly');
   });
 
-  // it("should not allow a non owner to trade a book to someone else", async() => {
-  //   await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
-  //
-  //   await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', owner, {from: librarian});
-  //
-  //   await assertRevert(await library.transferBookOwnership(115, borrower, {from: borrower}));
-  //   // ;
-  //   //
-  //   // let currentOwner = await library.checkCurrentOwner(115);
-  //   //
-  //   // assert.equal(owner, currentOwner, 'owner has not changed');
-  // });
+  it("should not allow a non owner to trade a book to someone else", async() => {
+    await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
+
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: librarian});
+
+    await assertRevert(library.transferBookOwnership(115, borrower, {from: borrower}));
+  });
 
   it("should allow a librarian to check out a book to a user", async() => {
     await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
-    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', owner, {from: librarian});
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: librarian});
 
     await library.loanBook(115, borrower, {from: librarian});
 
@@ -146,10 +130,28 @@ contract("Library", accounts => {
   });
 
   it("should not allow a non-librarian to check out a book to a user", async() => {
+    await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: librarian});
+
+    await assertRevert(library.loanBook(115, borrower, {from: borrower}));
   });
 
-  it("should allow any user to return a book if they borrowed book", async() => {
+  it("should allow any user to return a book if they borrowed the book", async() => {
+    await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
 
+    await library.addBook(115, 'Star Trek: Voyager Part 1', 'Fiction', 'New', librarian, owner, {from: librarian});
+
+    await library.loanBook(115, borrower, {from: librarian});
+
+    let currentBorrower = await library.checkBorrower(115);
+
+    assert.equal(currentBorrower, borrower, 'book is lent correctly');
+
+    await library.returnBook(115, librarian, {from: borrower});
+
+    let newBorrower = await library.checkBorrower(115);
+
+    assert.equal(newBorrower, librarian, 'book is returned correctly');
   });
 });
