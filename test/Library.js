@@ -1,4 +1,5 @@
 const Library = artifacts.require("./Library.sol");
+let assertRevert = require("./assertRevert.js");
 
 contract("Library", accounts => {
   const owner = accounts[0];
@@ -6,27 +7,7 @@ contract("Library", accounts => {
   const borrower = accounts[2];
 
   beforeEach(async() => {
-    let library = await Library.deployed();
-  })
-
-  it("should allow creation of a librarian by an owner", async() => {
-    await library.createLibrarian(librarian, 'Captain Janeway');
-
-    let newLibrarian = await library.getLibrarianByAddr(accounts[1]);
-
-    assert.equal(newLibrarian, 'Captain Janeway', 'librarian is created properly');
-  });
-
-  it("should not allow non owners to create librarians", async() => {
-    // try to make this non owner create something and make sure it's
-  });
-
-  it("should allow an owner to remove a librarian", async() => {
-
-  });
-
-  it("should not allow a non owner to remove a librarian", async() => {
-
+    library = await Library.new({from: owner});
   });
 
   it("should only allow a librarian to add a book", async() => {
@@ -41,11 +22,39 @@ contract("Library", accounts => {
 
   });
 
-  it("should show past owners of a book", async() => {
+  it("should not allow a user who is not a librarian to remove a book", async() => {
 
   });
 
-  it("should not allow a user who is not a librarian to remove a book", async() => {
+  it("should allow creation of a librarian by an owner", async() => {
+    await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
+
+    let newLibrarian = await library.getLibrarianNameByAddr(accounts[1]);
+
+    assert.equal(newLibrarian, 'Captain Janeway', 'librarian is created properly');
+  });
+
+  it("should not allow non owners to create librarians", async() => {
+    await assertRevert(library.createLibrarian(librarian, 'Captain Janeway', {from: borrower}))
+  });
+
+  it("should allow an owner to remove a librarian", async() => {
+    await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
+
+    await library.removeLibrarian(librarian, {from: owner});
+
+    let checkLibrarian = await library.getLibrarianNameByAddr(accounts[1]);
+
+    assert.equal(checkLibrarian, '', 'librarian  does not exist');
+  });
+
+  it("should not allow a non owner to remove a librarian", async() => {
+    await library.createLibrarian(librarian, 'Captain Janeway', {from: owner});
+
+    await assertRevert(library.removeLibrarian(librarian, {from: borrower}))
+  });
+
+  it("should show past owners of a book", async() => {
 
   });
 

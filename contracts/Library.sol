@@ -2,10 +2,10 @@ pragma solidity ^0.4.24;
 
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 
-contract Library { //  is Ownable
-  /* constructor() {
+contract Library is Ownable {
+  constructor() {
     owner = msg.sender;
-  } */
+  }
 
   struct Book {
     uint id;
@@ -35,17 +35,21 @@ contract Library { //  is Ownable
     return true
   } */
 
-  function createLibrarian(address addr, string name) private { // onlyOwner
-    librarians[addr] = Librarian(addr, name);
+  function createLibrarian(address addr, string name) onlyOwner {
+    librarians[addr] = Librarian({librarian: addr, name: name});
   }
 
-  function getLibrarianNameByAddr(address addr) public returns (string) {
+  function getLibrarianNameByAddr(address addr) public view returns (string) {
     return librarians[addr].name;
+  }
+
+  function removeLibrarian(address addr) onlyOwner {
+    delete librarians[addr];
   }
 
   // Certain functions would then need to fail if msg.sender is not contained in the library map.
 
-  function addBook() private { // onlyLibrarian
+  function addBook() { // onlyLibrarian
 
 
     /* addBookEvent(msg.sender, _name, _price); */
