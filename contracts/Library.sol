@@ -1,4 +1,5 @@
 pragma solidity ^0.4.24;
+/* pragma solidity ^0.4.23; */
 
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 
@@ -20,6 +21,8 @@ contract Library is Ownable {
     address librarian;
     string name;
   }
+
+  uint bookCounter;
 
   mapping(address => Librarian) public librarians;
   mapping(uint => Book) public books;
@@ -65,6 +68,7 @@ contract Library is Ownable {
   function addBook(uint sku, string _title, string _category, string _status, address borrower, address bookOwner) public onlyLibrarian {
     books[sku] = Book({id: sku, title: _title, category: _category, status: _status, bookLoanedTo: borrower, owner: bookOwner});
     emit addBookEvent(sku, _title, _category, _status);
+    bookCounter++;
   }
 
   function removeBook(uint id) public {
@@ -105,4 +109,28 @@ contract Library is Ownable {
   function checkCurrentOwner(uint id) public view returns (address) {
     return books[id].owner;
   }
+
+  function getBookCount() public constant returns (uint) {
+    return bookCounter;
+  }
+
+  /* function getBooksAvailable() public constant returns (uint[]) {
+    if (bookCounter == 0) {
+      return new uint[](0);
+    }
+
+    uint[] memory bookIds = new uint[](bookCounter);
+
+    uint numberOfBooks = 0;
+    for (uint i = 1; i <= bookCounter; i++) {
+      bookIds[numberOfBooks] = books[i].id;
+      numberOfBooks++;
+    }
+
+    uint[] memory booksAvailable = new uint[](numberOfBooks);
+    for (uint j = 0; j < numberOfBooks; j++) {
+      booksAvailable[j] = bookIds[j];
+    }
+    return (booksAvailable);
+  } */
  }
