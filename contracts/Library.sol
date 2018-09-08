@@ -11,8 +11,8 @@ contract Library is Ownable {
     uint id;
     string title;
     string category;
-    string description;
-    string state;
+    string status;
+    address bookLoanedTo;
     address owner;
   }
 
@@ -22,21 +22,35 @@ contract Library is Ownable {
   }
 
   mapping(address => Librarian) public librarians;
-  /* mapping (address => address) librarians; */ // fix
   mapping(uint => Book) public books;
+  mapping(address => bool) public isTrustedLibrarian;
 
-  /* event  */
-  event addBookEvent(
-    /* address librarian _sender, */
-    /* string _name, */
+  event loanBookEvent(
+    uint id,
+    address loanedTo
   );
 
-  /* modifier onlyLibrarian {
-    return true
-  } */
+  event addBookEvent(
+    uint id,
+    string title,
+    string category,
+    string status
+  );
+
+  event librarianAddedEvent(
+    string name,
+    address librarian
+  );
+
+  modifier onlyLibrarian {
+    require(isTrustedLibrarian[msg.sender]);
+    _;
+  }
 
   function createLibrarian(address addr, string name) onlyOwner {
     librarians[addr] = Librarian({librarian: addr, name: name});
+    isTrustedLibrarian[addr] = true;
+    librarianAddedEvent(name, addr);
   }
 
   function getLibrarianNameByAddr(address addr) public view returns (string) {
@@ -44,18 +58,51 @@ contract Library is Ownable {
   }
 
   function removeLibrarian(address addr) onlyOwner {
+    isTrustedLibrarian[addr] = false;
     delete librarians[addr];
   }
 
-  // Certain functions would then need to fail if msg.sender is not contained in the library map.
-
-  function addBook() { // onlyLibrarian
-
-
-    /* addBookEvent(msg.sender, _name, _price); */
+  function addBook(uint sku, string _title, string _category, string _status, address borrower, address bookOwner) onlyLibrarian {
+    books[sku] = Book({id: sku, title: _title, category: _category, status: _status, bookLoanedTo: borrower, owner: bookOwner});
+    addBookEvent(sku, _title, _category, _status);
   }
 
-  function loanBook() {
+  function removeBook(uint id) {
+    delete books[id];
+  }
 
+  function updateBookDamage(uint id, string _status) public onlyLibrarian {
+    books[id].status = _status;
+  }
+
+  function checkBookStatus(uint id) public view returns (string) {
+    return books[id].status;
+  }
+
+  function checkBookTitle(uint id) public view returns (string) {
+    return books[id].title;
+  }
+
+  function loanBook(uint id, address _borrower) onlyLibrarian {
+    books[id].bookLoanedTo = _borrower;
+    loanBookEvent(id, _borrower);
+  }
+
+  function returnBook(uint id, address _librarian) {
+    var bookLoanedTo = books[id].bookLoanedTo;
+    require(bookLoanedTo == msg.sender);
+    books[id].bookLoanedTo = _librarian;
+  }
+
+  function checkBorrower(uint id) public view returns (address) {
+    return books[id].bookLoanedTo;
+  }
+
+  function transferBookOwnership(uint id, address newOwner) onlyOwner {
+    books[id].owner = newOwner;
+  }
+
+  function checkCurrentOwner(uint id) public view returns (address) {
+    return books[id].owner;
   }
  }
