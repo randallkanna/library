@@ -47,27 +47,27 @@ contract Library is Ownable {
     _;
   }
 
-  function createLibrarian(address addr, string name) onlyOwner {
+  function createLibrarian(address addr, string name) public onlyOwner {
     librarians[addr] = Librarian({librarian: addr, name: name});
     isTrustedLibrarian[addr] = true;
-    librarianAddedEvent(name, addr);
+    emit librarianAddedEvent(name, addr);
   }
 
   function getLibrarianNameByAddr(address addr) public view returns (string) {
     return librarians[addr].name;
   }
 
-  function removeLibrarian(address addr) onlyOwner {
+  function removeLibrarian(address addr) public onlyOwner {
     isTrustedLibrarian[addr] = false;
     delete librarians[addr];
   }
 
-  function addBook(uint sku, string _title, string _category, string _status, address borrower, address bookOwner) onlyLibrarian {
+  function addBook(uint sku, string _title, string _category, string _status, address borrower, address bookOwner) public onlyLibrarian {
     books[sku] = Book({id: sku, title: _title, category: _category, status: _status, bookLoanedTo: borrower, owner: bookOwner});
-    addBookEvent(sku, _title, _category, _status);
+    emit addBookEvent(sku, _title, _category, _status);
   }
 
-  function removeBook(uint id) {
+  function removeBook(uint id) public {
     delete books[id];
   }
 
@@ -83,13 +83,13 @@ contract Library is Ownable {
     return books[id].title;
   }
 
-  function loanBook(uint id, address _borrower) onlyLibrarian {
+  function loanBook(uint id, address _borrower) public onlyLibrarian {
     books[id].bookLoanedTo = _borrower;
-    loanBookEvent(id, _borrower);
+    emit loanBookEvent(id, _borrower);
   }
 
-  function returnBook(uint id, address _librarian) {
-    var bookLoanedTo = books[id].bookLoanedTo;
+  function returnBook(uint id, address _librarian) public {
+    address bookLoanedTo = books[id].bookLoanedTo;
     require(bookLoanedTo == msg.sender);
     books[id].bookLoanedTo = _librarian;
   }
@@ -98,7 +98,7 @@ contract Library is Ownable {
     return books[id].bookLoanedTo;
   }
 
-  function transferBookOwnership(uint id, address newOwner) onlyOwner {
+  function transferBookOwnership(uint id, address newOwner) public onlyOwner {
     books[id].owner = newOwner;
   }
 
