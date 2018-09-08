@@ -21,13 +21,16 @@ class App extends Component {
       bookTitle: '',
       bookCategory: '',
       bookStatus: '',
-      bookLoanedTo: 0x0,
+      loanedTo: 0x0,
       bookOwner: 0x0,
+      bookCount: null,
     }
 
     this.setStateValues = this.setStateValues.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
+    this.onSubmitLibrarian = this.onSubmitLibrarian.bind(this);
     this.createBook = this.createBook.bind(this);
+    this.getBookCount = this.getBookCount.bind(this);
+    this.getBooks = this.getBooks.bind(this);
   }
 
   componentDidMount = async () => {
@@ -48,6 +51,10 @@ class App extends Component {
       this.setState({ web3, accounts, contract: instance }, this.runExample);
       this.setState({contractOwner: accounts[0]});
 
+      this.getBookCount();
+      this.getBooks();
+
+      // ignoring events for now with metamask not currently supporting well
       this.state.contract.allEvents((error, result) => {
         if (error) {
           console.log(error);
@@ -72,15 +79,42 @@ class App extends Component {
    this.setState({[event.target.name]: event.target.value})
   }
 
-  onSubmit(event) {
+  onSubmitLibrarian(event) {
     event.preventDefault();
-    this.state.contract.createLibrarian(this.state.librarianAddress, this.state.librarianName, {from: this.state.contractOwner});
+    this.state.contract.createLibrarian(this.state.librarianAddress, this.state.librarianName, {from: this.state.contractOwner}).then(() => {
+      alert('Librarian Added');
+    });
+
+    this.state.contract.allEvents((error, result) => {
+      if (error) {
+        console.log(error);
+      }
+      console.log(result);
+    });
+  }
+
+  getBookCount() {
+    this.state.contract.getBookCount().then((result) => {
+      this.setState({bookCount: result})
+    })
+  }
+
+  getBooksAvailable() {
+    debugger;
   }
 
   createBook(event) {
     event.preventDefault();
 
-    this.state.contract.addBook(this.state.bookId, this.state.bookTitle, this.state.bookCategory, this.state.bookStatus, this.state.loanedTo, this.state.bookOwner, {from: this.state.contractOwner});
+    this.state.contract.addBook(this.state.bookId, this.state.bookTitle, this.state.bookCategory, this.state.bookStatus, this.state.loanedTo, this.state.bookOwner, {from: this.state.contractOwner, gas: 30000});
+
+    this.getBookCount();
+  }
+
+  getBooks() {
+    // this.state.contract.getBooksAvailable().then((books) => {
+    //   // debugger;
+    // })
   }
 
   render() {
@@ -91,6 +125,15 @@ class App extends Component {
       <div className="App">
         <h1>Library</h1>
 
+
+
+        <h3>Add Librarian</h3>
+        <form onSubmit={this.onSubmitLibrarian}>
+          Name: <input type="text" name="librarianName" value={this.state.librarianName} onChange={(e) => this.setStateValues(e)} />
+          Address: <input type="text" name="librarianAddress" value={this.state.librarianAddress} onChange={(e) => this.setStateValues(e)} />
+        <input type="submit" />
+        </form>
+
         <h3>Add Book</h3>
         <form onSubmit={this.createBook}>
           Book SKU: <input type="text" name="bookId" value={this.state.bookId} onChange={(e) => this.setStateValues(e)} />
@@ -99,13 +142,6 @@ class App extends Component {
           Status: <input type="text" name="bookStatus" value={this.state.bookStatus} onChange={(e) => this.setStateValues(e)} />
           Loaned To: <input type="text" name="loanedTo" value={this.state.loanedTo} onChange={(e) => this.setStateValues(e)} />
           Owner: <input type="text" name="bookOwner" value={this.state.bookOwner} onChange={(e) => this.setStateValues(e)} />
-        <input type="submit" />
-        </form>
-
-        <h3>Add Librarian</h3>
-        <form onSubmit={this.onSubmit}>
-          Name: <input type="text" name="librarianName" value={this.state.librarianName} onChange={(e) => this.setStateValues(e)} />
-          Address: <input type="text" name="librarianAddress" value={this.state.librarianAddress} onChange={(e) => this.setStateValues(e)} />
         <input type="submit" />
         </form>
       </div>
